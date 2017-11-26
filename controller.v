@@ -184,6 +184,7 @@ module controller (/*AUTOARG*/
    always @(posedge clk) begin
       if($initstate) begin
 	 assume($past(fifo_full) == 0);
+	 assume($past(state) == C_IDLE);
       end
       else begin
 	 assert(!($past(fifo_full) && fifo_wr));
@@ -200,6 +201,8 @@ module controller (/*AUTOARG*/
       if($past(state) != P_SET_DIVR) begin
 	 assert(freq_wr_divr == 0);
       end
+      if($past(state) == C_NBYTES && $past(packet_type) > 3 && $past(spi_c_data_stb))
+	assert(state == C_IDLE);
       
 					    
       

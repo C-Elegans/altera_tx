@@ -2,7 +2,7 @@
 mode prove
 
 [engines]
-smtbmc boolector
+smtbmc yices
 
 [script]
 read_verilog -formal controller.v
