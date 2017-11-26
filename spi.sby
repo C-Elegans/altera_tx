@@ -1,0 +1,12 @@
+[options]
+mode prove
+
+[engines]
+smtbmc yices
+
+[script]
+read_verilog -formal spi.v
+prep -top spi
+
+[files]
+spi.v

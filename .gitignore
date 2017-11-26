@@ -8,3 +8,4 @@ altera_mf.v
 output_files/
 greybox_tmp/
 *.vcd
+*/*

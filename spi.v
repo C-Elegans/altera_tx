@@ -96,5 +96,19 @@ module spi (/*AUTOARG*/
 
    assign MISO = byte_data_sent[7];
 
+`ifdef FORMAL
+
+   always @(posedge clk) begin
+      if($initstate) begin
+	 assume(spi_data_stb == 0);
+      end
+      
+      if($past(spi_data_stb))
+	assert(!spi_data_stb);
+
+   end
+   
+`endif
+   
    
 endmodule // spi
