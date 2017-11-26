@@ -1,0 +1,10 @@
+*~
+obj_dir/
+logs/
+controller/
+db/
+incremental_db/
+altera_mf.v
+output_files/
+greybox_tmp/
+*.vcd

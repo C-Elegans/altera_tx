@@ -1,0 +1,12 @@
+[options]
+mode prove
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -formal controller.v
+prep -top controller
+
+[files]
+controller.v
