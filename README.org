@@ -1,0 +1,28 @@
+#+TITLE: DE0 Nano I/Q transmitter
+* Introduction
+This project uses a DE0-Nano to perform the modulation for a DIY HF
+radio transmitter. The DE0-Nano is fed I/Q samples at 10ks/s over SPI
+and multiplies them with quadrature sine waves before summing them and
+sending them to a high speed DAC. 
+
+* Building
+Compiling and running this project on an FPGA requires the use of the
+Quartus II software, version 13.0 or higher. Select ~altera_tx.qpf~ in 
+the 'Open Project' dialog, then click compile.
+
+* Testing
+** Verilog testbenches
+   Verilog testbenches can be loaded into Modelsim-Altera and run
+   there, or simulated via Icarus Verilog. Each module includes a
+   comment at the top of the file that lists its dependencies for 
+   simulation
+** Verilator testbenches
+   Before running these, please install verilator. Then type ~make~
+   into the command line
+** Formal Verification
+   Formal verification requires installing:
+   1. Yosys
+   2. SymbiYosys
+   3. Yices II
+
+   After installing these packages, run ~make formal~ in the shell
