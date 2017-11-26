@@ -9,12 +9,6 @@
 // Status          : Unknown, Use with caution!
 `timescale 1ns/1ps
 
-`ifdef FORMAL
- `define assert(__x__) assert(__x__)
-`else
- `define assert(__x__)
-`endif
-
 module controller (/*AUTOARG*/
    // Outputs
    spi_c_data_out, freq_data, freq_wr_divr, freq_wr_divf,
@@ -43,7 +37,6 @@ module controller (/*AUTOARG*/
      C_IDLE		= 5'b00000,
      C_PCKT_TYPE	= 5'b00001,
      C_NBYTES		= 5'b00010,
-     C_DATA		= 5'b00011,
 
      P_GET_SPACE	= 5'b01000,
      P_GET_SPACE_2	= 5'b01001,
@@ -147,7 +140,6 @@ module controller (/*AUTOARG*/
 
 	  default: begin
 	     state <= C_IDLE;
-	     `assert(0);
 	  end
 	endcase // case state
       
@@ -185,8 +177,10 @@ module controller (/*AUTOARG*/
       if($initstate) begin
 	 assume($past(fifo_full) == 0);
 	 assume($past(state) == C_IDLE);
+	 assume(state == C_IDLE);
       end
       else begin
+	 assume(rst == 0);
 	 // Prove that the fifo cannot overflow
 	 assert(!($past(fifo_full) && fifo_wr));
       end // else: !if($initstate) 
@@ -213,6 +207,30 @@ module controller (/*AUTOARG*/
       end
       if($past(state) == C_NBYTES && $past(packet_type) > 3 && $past(spi_c_data_stb))
 	assert(state == C_IDLE);
+      
+      case($past(state))
+	C_IDLE:
+	  assert((state == C_IDLE )|| (state == C_PCKT_TYPE));
+	C_PCKT_TYPE:
+	  assert(state == C_PCKT_TYPE || state == C_NBYTES);
+	C_NBYTES:
+	  assert(state == C_IDLE || state == C_NBYTES || state == {$past(packet_type[1:0]),3'b0});
+	
+	P_GET_SPACE:
+	  assert(state == P_GET_SPACE || state == P_GET_SPACE_2);
+	P_GET_SPACE_2:
+	  assert(state == P_GET_SPACE_2 || state == C_IDLE);
+
+	P_SET_DIVR:
+	  assert(state == P_SET_DIVR || state == P_SET_DIVF);
+	P_SET_DIVF:
+	  assert(state == P_SET_DIVF || state == C_IDLE);
+	P_FIFO_DATA:
+	  assert(state == P_FIFO_DATA || state == C_IDLE);
+	default:
+	  assert(0);
+	  
+      endcase // case ($past(state))
       
 					    
       
