@@ -1,0 +1,12 @@
+[options]
+mode prove
+
+[engines]
+smtbmc yices
+
+[script]
+read_verilog -formal phase_accum.v
+prep -top phase_accum
+
+[files]
+phase_accum.v
