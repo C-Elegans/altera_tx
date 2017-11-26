@@ -99,12 +99,18 @@ module spi (/*AUTOARG*/
 `ifdef FORMAL
 
    always @(posedge clk) begin
-      if($initstate) begin
+      if($initstate) begin 
 	 assume(spi_data_stb == 0);
+	 assume($past(spi_data_stb) == 0);
       end
       
-      if($past(spi_data_stb))
-	assert(!spi_data_stb);
+      // Assert that spi_data_stb cannot be high for more than 1 out
+      // of 3 cycles. Needed for assumptions in controller.v
+      if($past(spi_data_stb,2)) begin
+	 assert(!$past(spi_data_stb));
+	 assert(!spi_data_stb);
+      end
+	   
 
    end
    

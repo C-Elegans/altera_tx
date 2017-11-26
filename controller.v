@@ -187,12 +187,22 @@ module controller (/*AUTOARG*/
 	 assume($past(state) == C_IDLE);
       end
       else begin
+	 // Prove that the fifo cannot overflow
 	 assert(!($past(fifo_full) && fifo_wr));
-      end // else: !if($initstate)
-      if($past(fifo_full) == 0 && !fifo_wr)
+      end // else: !if($initstate) 
+
+      // Assume that the fifo will not raise fifo_full if there was
+      // not a write in the previous cycle. Not proved because the ip
+      // is not availible for formal verification
+      if($past(fifo_full) == 0 && !$past(fifo_wr)) // 
 	assume(fifo_full == 0);
-      if($past(spi_c_data_stb))
-	assume(spi_c_data_stb == 0);
+      // Assume that spi_c_data_stb cannot be high for more than 1 out
+      // of every 3 cycles. Proven in spi.v
+      if($past(spi_c_data_stb,2)) begin
+	 assume($past(spi_c_data_stb) == 0);
+	 assume(spi_c_data_stb == 0);
+      end
+      
 
       if($past(state) != P_SET_DIVF) begin
 	 assert(freq_wr_divf == 0);
