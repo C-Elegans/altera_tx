@@ -155,7 +155,6 @@ module controller (/*AUTOARG*/
 	C_IDLE:        state_ascii = "c_idle       ";
 	C_PCKT_TYPE:   state_ascii = "c_pckt_type  ";
 	C_NBYTES:      state_ascii = "c_nbytes     ";
-	C_DATA:        state_ascii = "c_data       ";
 	P_GET_SPACE:   state_ascii = "p_get_space  ";
 	P_GET_SPACE_2: state_ascii = "p_get_space_2";
 	P_SET_DIVR:    state_ascii = "p_set_divr   ";

@@ -1,3 +1,4 @@
+`default_nettype none
 module altera_tx(/*AUTOARG*/
    // Outputs
    MISO, DAC_OUT,
@@ -13,10 +14,12 @@ module altera_tx(/*AUTOARG*/
    wire [7:0] 	i_mul, q_mul;
    wire [7:0] 	phase;
 
-   wire 	clk, rst;
+   wire 	clk, rst, en;
 
    wire [7:0] 	spi_data_out;
    wire [7:0] 	spi_data_in;
+   wire 	spi_data_stb;
+   wire 	spi_tsx_start;
 
    /*AUTOWIRE*/
    wire			fifo_empty;			// From fifo of fifo.v
@@ -29,9 +32,6 @@ module altera_tx(/*AUTOARG*/
    wire [7:0]		freq_data;		// From controller of controller.v
    wire			freq_wr_divf;		// From controller of controller.v
    wire			freq_wr_divr;		// From controller of controller.v
-   assign data = spi_data_out;
-   assign i_mul = spi_data_out;
-   assign q_mul = spi_data_out;
    pll pllinst(
 	       // Outputs
 	       .c0			(clk),
@@ -63,6 +63,7 @@ module altera_tx(/*AUTOARG*/
 	   .MISO			(MISO),
 	   .spi_data_out		(spi_data_out[7:0]),
 	   .spi_data_stb		(spi_data_stb),
+	   .spi_tsx_start(spi_tsx_start),
 	   // Inputs
 	   .clk				(clk),
 	   .rst				(rst),
@@ -102,6 +103,17 @@ module altera_tx(/*AUTOARG*/
 	     .rdreq			(fifo_rd),
 	     .sclr			(rst),
 	     .wrreq			(fifo_wr));
+   sampler sampler(
+		   // Outputs
+		   .fifo_rd		(fifo_rd),
+		   .sample_i		(i_mul[7:0]),
+		   .sample_q		(q_mul[7:0]),
+		   // Inputs
+		   .clk			(clk),
+		   .rst			(rst),
+		   .fifo_empty		(fifo_empty),
+		   .fifo_data_out	(fifo_data[7:0]));
+   
    
 
 endmodule

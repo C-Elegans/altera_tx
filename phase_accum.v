@@ -30,7 +30,7 @@ module phase_accum (/*AUTOARG*/
       end
       else if(en) begin
 	 {carry, accum_f} <= accum_f + inc_f; 
-	 accum_r <= accum_r + inc_r + carry;
+	 accum_r <= accum_r + inc_r + {7'b0,carry};
       end
    end
    always @(posedge clk) begin
