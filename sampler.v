@@ -20,7 +20,7 @@ module sampler (/*AUTOARG*/
    // Fifo signals
    input fifo_empty;
    input [7:0] fifo_data_out;
-   output      fifo_rd;
+   output   reg fifo_rd;
 
    // sample output
    output reg [7:0] sample_i;

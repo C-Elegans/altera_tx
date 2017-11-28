@@ -1,15 +1,15 @@
+//deps: sampler.v, spi.v, controller.v, fifo.v, iq_mod.v, phase_accum.v, pll.v, mult.v, altera_mf.v
 `default_nettype none
 module altera_tx(/*AUTOARG*/
    // Outputs
    MISO, DAC_OUT,
    // Inputs
-   CLOCK_50, MOSI, SCK, SSEL, SW
+   CLOCK_50, MOSI, SCK, SSEL
    );
    input CLOCK_50;
    input MOSI, SCK, SSEL;
    output MISO;
    output [7:0] DAC_OUT;
-   input [3:0] 	SW;
 
    wire [7:0] 	i_mul, q_mul;
    wire [7:0] 	phase;
