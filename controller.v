@@ -210,10 +210,17 @@ module controller (/*AUTOARG*/
       case($past(state))
 	C_IDLE:
 	  assert((state == C_IDLE )|| (state == C_PCKT_TYPE));
-	C_PCKT_TYPE:
-	  assert(state == C_PCKT_TYPE || state == C_NBYTES);
-	C_NBYTES:
-	  assert(state == C_IDLE || state == C_NBYTES || state == {$past(packet_type[1:0]),3'b0});
+	C_PCKT_TYPE: begin
+	   assert(state == C_PCKT_TYPE || state == C_NBYTES);
+	   if(!$stable(state))
+	     assert(packet_type == $past(spi_c_data_in));
+	end
+	
+	C_NBYTES: begin
+	   assert(state == C_IDLE || state == C_NBYTES || state == {$past(packet_type[1:0]),3'b0});
+	   if(!$stable(state))
+	     assert(msg_bytes == $past(spi_c_data_in));
+	   end
 	
 	P_GET_SPACE:
 	  assert(state == P_GET_SPACE || state == P_GET_SPACE_2);
