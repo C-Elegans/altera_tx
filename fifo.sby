@@ -1,0 +1,14 @@
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc yices
+
+[script]
+read_verilog -formal fifo.v
+prep -top fifo
+memory -nordff
+
+[files]
+fifo.v
