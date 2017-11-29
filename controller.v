@@ -22,7 +22,7 @@ module controller (/*AUTOARG*/
    output reg [7:0] spi_c_data_out;
    input 	    spi_c_data_stb;
    input 	    spi_tsx_start;
-   input [11:0]     fifo_space_free;
+   input [12:0]     fifo_space_free;
 
    output reg [7:0]     freq_data;
    output reg 		freq_wr_divr;
@@ -96,7 +96,7 @@ module controller (/*AUTOARG*/
 	    end // if (spi_c_data_stb)
 
 	  P_GET_SPACE: begin
-	     spi_c_data_out <= {4'b0, fifo_space_free[11:8]};
+	     spi_c_data_out <= {3'b0, fifo_space_free[12:8]};
 	     if(spi_c_data_stb)
 	       state <= P_GET_SPACE_2;
 	  end

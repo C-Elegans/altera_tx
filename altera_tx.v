@@ -25,19 +25,19 @@ module altera_tx(/*AUTOARG*/
    wire			fifo_empty;			// From fifo of fifo.v
    wire			fifo_full;			// From fifo of fifo.v
    wire [7:0]		fifo_data;			// From fifo of fifo.v
-   wire [11:0]		fifo_space_free;			// From fifo of fifo.v
+   wire [12:0]		fifo_space_free;			// From fifo of fifo.v
    wire 		fifo_rd, fifo_wr;
    wire [7:0] 		fifo_data_in;
 
    wire [7:0]		freq_data;		// From controller of controller.v
    wire			freq_wr_divf;		// From controller of controller.v
    wire			freq_wr_divr;		// From controller of controller.v
-   pll pllinst(
-	       // Outputs
-	       .c0			(clk),
-	       .locked			(rst),
-	       // Inputs
-	       .inclk0			(CLOCK_50));
+   fpll pll(
+	    // Outputs
+	    .rst			(rst),
+	    .clk			(clk),
+	    // Inputs
+	    .clkin			(CLOCK_50));
 
    iq_mod modulator(
 		    // Outputs
@@ -83,7 +83,7 @@ module altera_tx(/*AUTOARG*/
 			 .spi_c_data_in		(spi_data_out[7:0]),
 			 .spi_c_data_stb	(spi_data_stb),
 			 .spi_tsx_start		(spi_tsx_start),
-			 .fifo_space_free	(fifo_space_free[11:0]),
+			 .fifo_space_free	(fifo_space_free[12:0]),
 			 /*AUTOINST*/
 			 // Outputs
 			 .fifo_data_in		(fifo_data_in[7:0]),
@@ -95,13 +95,13 @@ module altera_tx(/*AUTOARG*/
 	     // Outputs
 	     .empty			(fifo_empty),
 	     .full			(fifo_full),
-	     .q				(fifo_data[7:0]),
-	     .usedw			(fifo_space_free[11:0]),
+	     .fifo_data 		(fifo_data[7:0]),
+	     .fifo_space_free		(fifo_space_free[12:0]),
 	     // Inputs
-	     .clock			(clk),
-	     .data			(fifo_data_in[7:0]),
+	     .clk			(clk),
+	     .fifo_data_in		(fifo_data_in[7:0]),
 	     .rdreq			(fifo_rd),
-	     .sclr			(rst),
+	     .rst			(rst),
 	     .wrreq			(fifo_wr));
    sampler sampler(
 		   // Outputs
