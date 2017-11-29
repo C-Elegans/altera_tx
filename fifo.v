@@ -8,7 +8,8 @@
 // Update Count    : 0
 // Status          : Unknown, Use with caution!
 `ifdef FIFO
- `define ASSUME assert
+ // `define ASSUME assert
+ `define ASSUME assume
 `else
  `define ASSUME assume
 `endif
@@ -81,13 +82,17 @@ module fifo (/*AUTOARG*/
 	    assert(fifo_space_free == 1<< LG_FIFO_DEPTH);
 	 assume(rst == 0);
 	 if ($past(wrreq) && !$past(rdreq)) begin
+	    `ifndef FIFO
 	    assert(mem[$past(wrptr[LG_FIFO_DEPTH-1:0])] == $past(fifo_data_in));
 	    assert(wrptr == ($past(wrptr) + 1) & (1<<LG_FIFO_DEPTH)-1 );
+	    `endif
 	    assert(fifo_space_free == $past(fifo_space_free)-1);
 	 end
 	 if($past(rdreq) && !$past(wrreq)) begin
+	    `ifndef FIFO
 	    assert($past(fifo_data) == mem[$past(rdptr[LG_FIFO_DEPTH-1:0])]);
-	    assert(rdptr == $past(rdptr) + 1);
+	    assert(rdptr ==($past(rdptr) + 1) & (1<<LG_FIFO_DEPTH)-1 ); 
+	    `endif
 	    assert(fifo_space_free == $past(fifo_space_free)+1);
 	 end
 	 

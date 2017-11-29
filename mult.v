@@ -25,7 +25,7 @@ module mult (/*AUTOARG*/
    reg signed [15:0] 	 o_reg;
    assign out = o_reg;
 
-   always @(posedge clk or posedge areset)
+   always @(posedge clk)
    begin
       if(areset == 1) begin
 	 a_reg <= 8'b0;

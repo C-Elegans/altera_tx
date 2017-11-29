@@ -1,0 +1,25 @@
+[options]
+mode prove
+depth 10
+
+[engines]
+smtbmc yices
+
+[script]
+read_verilog -formal altera_tx.v sampler.v spi.v controller.v fifo.v iq_mod.v phase_accum.v fpll.v mult.v sin_table.v
+prep -top altera_tx
+memory -nordff
+dffsr2dff
+
+[files]
+altera_tx.v
+sampler.v
+spi.v
+controller.v
+fifo.v
+iq_mod.v
+phase_accum.v
+fpll.v
+mult.v
+sin_table.v
+sins.hex

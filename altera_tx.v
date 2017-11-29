@@ -1,5 +1,6 @@
 //deps: sampler.v, spi.v, controller.v, fifo.v, iq_mod.v, phase_accum.v, pll.v, mult.v, altera_mf.v
 `default_nettype none
+`define FIFO
 module altera_tx(/*AUTOARG*/
    // Outputs
    MISO, DAC_OUT,
@@ -32,6 +33,8 @@ module altera_tx(/*AUTOARG*/
    wire [7:0]		freq_data;		// From controller of controller.v
    wire			freq_wr_divf;		// From controller of controller.v
    wire			freq_wr_divr;		// From controller of controller.v
+
+   assign en = 1;
    fpll pll(
 	    // Outputs
 	    .rst			(rst),
