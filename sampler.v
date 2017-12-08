@@ -43,6 +43,8 @@ module sampler (/*AUTOARG*/
 	 counter_stb <= 1'h0;
 	 // End of automatics
       end
+      // Fires off counter_stb 10k times per second to tell the state
+      // machine to update the samples
       counter_stb <= 0;
       if(counter == 0)begin
 	 counter <= COUNT;
@@ -52,11 +54,17 @@ module sampler (/*AUTOARG*/
       else
 	counter <= counter - 1;
    end
+   // States:
+   // 4'b0001 (IDLE) - waits for a strobe from the above counter
+   // 4'b0010 (I_SAMPLE) - reads a sample from the fifo and outputs it to sample_i
+   // 4'b0100 (PAUSE) - gives the fifo time to assert its empty flag
+   // 4'b1000 (Q_SAMPLE) - reads a sample from the fifo and outputs it to sample_q
    localparam 			// auto enum state_t
      S_IDLE = 0,
      S_I_SAMPLE = 1,
-     S_Q_SAMPLE = 2;
-   reg [2:0] //auto enum state_t
+     S_PAUSE = 2,
+     S_Q_SAMPLE = 3;
+   reg [3:0] //auto enum state_t
 	     state;
      
    always @(posedge clk) begin
@@ -70,28 +78,37 @@ module sampler (/*AUTOARG*/
 	 // End of automatics
       end
       else begin 
+	 // reset the read pointer
 	 fifo_rd <= 0;
 	 case(1)
 	   state[S_IDLE]: begin
 	      if(counter_stb) begin
-		 if(!fifo_empty)
-		   fifo_rd <= 1;
 		 state <= 1<<S_I_SAMPLE;
 	      end
 	   end
 	   state[S_I_SAMPLE]: begin
 	      if(!fifo_empty) begin
-		 fifo_rd <= 1;
+		 // The current fifo does not register the output so
+		 // read it on the same cycle the fifo_rd is set
 		 sample_i <= fifo_data_out;
+		 fifo_rd <= 1;
 	      end
+	      // If the fifo is empty, set the sample to 0
 	      else begin
 		 sample_i <= 0;
 	      end // else: !if(!fifo_empty)
-	      state <= 1<<S_Q_SAMPLE;
+	      state <= 1<<S_PAUSE;
 	   end // case: state[S_I_SAMPLE]
+	   state[S_PAUSE]:begin
+	      // Pause to allow the fifo to set its empty flag
+	      state <= 1<<S_Q_SAMPLE;
+	   end
+	   
 	   state[S_Q_SAMPLE]: begin
-	      if(!fifo_empty)
-		sample_q <= fifo_data_out;
+	      if(!fifo_empty) begin
+		 sample_q <= fifo_data_out;
+		 fifo_rd <= 1;
+	      end
 	      else
 		sample_q <= 0;
 	      state <= 1<<S_IDLE;
@@ -111,9 +128,10 @@ module sampler (/*AUTOARG*/
    reg [79:0]		state_ascii;		// Decode of state
    always @(state) begin
       case ({state})
-	(3'b1<<S_IDLE):     state_ascii = "s_idle    ";
-	(3'b1<<S_I_SAMPLE): state_ascii = "s_i_sample";
-	(3'b1<<S_Q_SAMPLE): state_ascii = "s_q_sample";
+	(4'b1<<S_IDLE):     state_ascii = "s_idle    ";
+	(4'b1<<S_I_SAMPLE): state_ascii = "s_i_sample";
+	(4'b1<<S_PAUSE):    state_ascii = "s_pause   ";
+	(4'b1<<S_Q_SAMPLE): state_ascii = "s_q_sample";
 	default:            state_ascii = "%Error    ";
       endcase
    end
@@ -137,14 +155,26 @@ module sampler (/*AUTOARG*/
 	 if($past(counter_stb))
 	   assert(state[S_I_SAMPLE] == 1);
 	 if($past(state[S_I_SAMPLE]))
+	   assert(state[S_PAUSE]);
+	 if($past(state[S_PAUSE]))
 	   assert(state[S_Q_SAMPLE]);
 	 if($past(state[S_Q_SAMPLE]))
 	   assert(state[S_IDLE]);
+	 // assert that the state is onehot
+	 assert(state[0] + state[1] + state[2] + state[3] == 1);
+
+	 // Assume that the fifo doesn't go empty unless a read is
+	 // requested, proven in fifo.v
+	 if(!$past(fifo_empty) && !$past(fifo_rd))
+	   assume(!fifo_empty);
+
+	 // Assert that fifo_rd is high for only one cycle at a time
+	 if($past(fifo_rd))
+	   assert(!fifo_rd);
+	 // Prove that sampler.v cannot underflow the fifo 
+	 assert(!(fifo_empty && fifo_rd));
       end 
       // Prove that the state register is always 1hot
-      assert(state[0] + state[1] + state[2] == 1);
-      // Prove that sampler.v cannot underflow the fifo 
-      assert(!($past(fifo_empty) && fifo_rd));
    end // always @ (posedge clk)
    
       
