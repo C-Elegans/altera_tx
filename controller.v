@@ -18,16 +18,19 @@ module controller (/*AUTOARG*/
    fifo_space_free, fifo_empty, fifo_full
    ) ;
    input clk, rst;
-   input [7:0] spi_c_data_in;
+   // Data to and from the spi module
+   input [7:0]      spi_c_data_in;
    output reg [7:0] spi_c_data_out;
    input 	    spi_c_data_stb;
    input 	    spi_tsx_start;
    input [12:0]     fifo_space_free;
 
+   // Control signals for the frequency counter
    output reg [7:0]     freq_data;
    output reg 		freq_wr_divr;
    output reg 		freq_wr_divf;
 
+   // Signals for writing to the fifo
    input 		fifo_empty;
    input 		fifo_full;
    output reg [7:0] 	fifo_data_in;
@@ -74,18 +77,28 @@ module controller (/*AUTOARG*/
       else
 
 	case(state)
+	  // Idle state, waits for some data from the SPI module. 
 	  C_IDLE: begin
 	     if(spi_tsx_start) begin
 		state <= C_PCKT_TYPE;
 		spi_c_data_out <= 8'hA5;
 	     end
 	  end // case: state...
+	  
+	  // Receives the byte signifying the type of packet. Right
+	  // now there are only 3 types:
+	  // 2'b01: request for the number of items in the fifo
+	  // 2'b10: Sets DIVR and DIVF of the frequency counter
+	  // 2'b11: Writes nbytes to the fifo
 	  C_PCKT_TYPE: begin
 	     if(spi_c_data_stb) begin
 		state <= C_NBYTES;
 		packet_type <= spi_c_data_in;
 	     end
 	  end // case: C_PCKT_TYPE
+
+	  // Gets the number of bytes of payload. Only really
+	  // important with data for the fifo
 	  C_NBYTES:
 	    if(spi_c_data_stb) begin
 	       msg_bytes <= spi_c_data_in;
@@ -95,16 +108,22 @@ module controller (/*AUTOARG*/
 		 state <= {packet_type[1:0] , 3'b0};
 	    end // if (spi_c_data_stb)
 
+	  // Sends the most significant bits of the space free in the fifo
 	  P_GET_SPACE: begin
 	     spi_c_data_out <= {3'b0, fifo_space_free[12:8]};
 	     if(spi_c_data_stb)
 	       state <= P_GET_SPACE_2;
-	  end
+	  end // case: P_GET_SPACE
+	  // Sends the least significant bits of the remaining space
+	  // in the fifo
 	  P_GET_SPACE_2: begin
 	     spi_c_data_out <= fifo_space_free[7:0];
 	     state <= C_IDLE;
 	  end
 
+	  // Sets the DIVR parameter in the frequency counter. wr_divr
+	  // is reset at the beginning of the always block so does not
+	  // need to be reset here
 	  P_SET_DIVR: begin
 	     if(spi_c_data_stb) begin
 		state <= P_SET_DIVF;
@@ -112,6 +131,7 @@ module controller (/*AUTOARG*/
 		freq_wr_divr <= 1;
 	     end
 	  end
+	  // Same thing for divf
 	  P_SET_DIVF: begin
 	     if(spi_c_data_stb) begin
 		state <= C_IDLE;
@@ -120,6 +140,8 @@ module controller (/*AUTOARG*/
 	     end
 	  end
 
+	  // Writes bytes to the fifo until either the fifo is full or
+	  // msg_bytes == 0
 	  P_FIFO_DATA: begin
 	     if(spi_c_data_stb) begin
 		fifo_data_in <= spi_c_data_in;
@@ -173,22 +195,26 @@ module controller (/*AUTOARG*/
       
 	
    always @(posedge clk) begin
+      // Set up the initial (reset) state
       if($initstate) begin
 	 assume($past(fifo_full) == 0);
 	 assume($past(state) == C_IDLE);
 	 assume(state == C_IDLE);
       end
       else begin
+	 
 	 assume(rst == 0);
 	 // Prove that the fifo cannot overflow
 	 assert(!($past(fifo_full) && fifo_wr));
-      end // else: !if($initstate) 
+
+      end // else: !if($initstate)
+
 
       // Assume that the fifo will not raise fifo_full if there was
-      // not a write in the previous cycle. Not proved because the ip
-      // is not availible for formal verification
+      // not a write in the previous cycle. Proven in fifo.v
       if($past(fifo_full) == 0 && !$past(fifo_wr)) // 
 	assume(fifo_full == 0);
+
       // Assume that spi_c_data_stb cannot be high for more than 1 out
       // of every 3 cycles. Proven in spi.v
       if($past(spi_c_data_stb,2)) begin
@@ -196,32 +222,42 @@ module controller (/*AUTOARG*/
 	 assume(spi_c_data_stb == 0);
       end
       
-
+      // Assert that wr_divf doesnt get set in any state other than SET_DIVF
       if($past(state) != P_SET_DIVF) begin
 	 assert(freq_wr_divf == 0);
       end
-      
+      // Same thing with SET_DIVR
       if($past(state) != P_SET_DIVR) begin
 	 assert(freq_wr_divr == 0);
       end
-      if($past(state) == C_NBYTES && $past(packet_type) > 3 && $past(spi_c_data_stb))
+
+      // Assert that given an invalid state byte we move back to idle
+      if($past(state) == C_NBYTES && 
+	 $past(packet_type) > 3 && 
+	 $past(spi_c_data_stb))
 	assert(state == C_IDLE);
+
       
       case($past(state))
+	// Make sure the next state is either idle or packet type
 	C_IDLE:
 	  assert((state == C_IDLE )|| (state == C_PCKT_TYPE));
+	// make sure the next state is either the same or nbytes
+	// make sure packet_type gets set to the incoming byte
 	C_PCKT_TYPE: begin
 	   assert(state == C_PCKT_TYPE || state == C_NBYTES);
 	   if(!$stable(state))
 	     assert(packet_type == $past(spi_c_data_in));
 	end
-	
+
+	// Make sure the next state is set to that specified in the packet
+	// Make sure msg_bytes gets set to the incoming data
 	C_NBYTES: begin
 	   assert(state == C_IDLE || state == C_NBYTES || state == {$past(packet_type[1:0]),3'b0});
 	   if(!$stable(state))
 	     assert(msg_bytes == $past(spi_c_data_in));
 	   end
-	
+	// Same thing, make sure the state transitions are valid
 	P_GET_SPACE:
 	  assert(state == P_GET_SPACE || state == P_GET_SPACE_2);
 	P_GET_SPACE_2:
@@ -237,6 +273,12 @@ module controller (/*AUTOARG*/
 	  assert(0);
 	  
       endcase // case ($past(state))
+
+      // Assert that wr_divr and wr_divf get reset after being set
+      if($past(freq_wr_divr) == 1)
+	assert(freq_wr_divr == 0);
+      if($past(freq_wr_divf) == 1)
+	assert(freq_wr_divf == 0);
       
 					    
       
