@@ -19,3 +19,16 @@ formal: $(FORMAL)
 	sby -f $<
 
 .PHONY: formal
+
+clean:
+	rm -f *.smt2
+	rm -f *.vcd
+	rm -rf altera_tx/
+	rm -rf controller/
+	rm -rf fifo/
+	rm -rf phase_accum/
+	rm -rf sampler/
+	rm -rf spi/
+
+distclean:
+	rm *~
