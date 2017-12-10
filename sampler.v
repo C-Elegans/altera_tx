@@ -174,7 +174,6 @@ module sampler (/*AUTOARG*/
 	 // Prove that sampler.v cannot underflow the fifo 
 	 assert(!(fifo_empty && fifo_rd));
       end 
-      // Prove that the state register is always 1hot
    end // always @ (posedge clk)
    
       

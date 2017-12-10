@@ -41,7 +41,11 @@ module iq_mod (/*AUTOARG*/
 	   .dataa			(data_q[7:0]),
 	   .datab			(q_mul[7:0]));
 
-   always @(posedge clk)
-     dac_data <= res_q[15:8] + res_i[15:8];
+   always @(posedge clk) begin
+      // Combine i and q samples, convert to unsigned centered around 128
+      dac_data <= (res_q[15:8] + res_i[15:8]) ^ 128;
+   end
+
+   
    
 endmodule // iq_mod
