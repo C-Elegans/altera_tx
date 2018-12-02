@@ -26,9 +26,9 @@ module spi (/*AUTOARG*/
    output  	spi_tsx_start;
 
    // Synchronizing the inputs
-   reg [2:0] 	SCK_sync;
-   reg [2:0] 	SSEL_sync;
-   reg [1:0] 	MOSI_sync;
+   reg [2:0] 	SCK_sync = 3'b0;
+   reg [2:0] 	SSEL_sync = 3'b111;
+   reg [1:0] 	MOSI_sync = 2'b0;
    always @(posedge clk) begin
       SCK_sync <= {SCK_sync[1:0], SCK};
       SSEL_sync <= {SSEL_sync[1:0], SSEL};
@@ -43,9 +43,9 @@ module spi (/*AUTOARG*/
    wire MOSI_data = MOSI_sync[1];
    assign spi_tsx_start = SSEL_falling;
 
-   reg [2:0] bits;
-   reg 	     byte_received;
-   reg [7:0] byte_data_received;
+   reg [2:0] bits = 3'b0;
+   reg 	     byte_received = 1'b0;
+   reg [7:0] byte_data_received = 8'b0;
    always @(posedge clk) begin
       if(rst) begin
 	 /*AUTORESET*/
